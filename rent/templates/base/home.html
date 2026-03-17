@@ -1,0 +1,148 @@
+{% extends 'base/base.html' %}
+{% block title %}Home - House Lease System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero { background: linear-gradient(135deg, #1c2b36 0%, #1a6b3c 100%); color: white; padding: 90px 0; }
+    .hero h1 { font-size: 3rem; font-weight: 800; }
+    .search-bar { background: white; border-radius: 50px; padding: 8px 8px 8px 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+    .stats-bar { background: white; border-radius: 16px; margin-top: -40px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    .stat-item { border-right: 1px solid #eee; }
+    .stat-item:last-child { border-right: none; }
+    .section-title { font-weight: 700; font-size: 1.8rem; color: #1c2b36; }
+    .property-price { color: #1a6b3c; font-size: 1.2rem; font-weight: 700; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="hero">
+    <div class="container text-center">
+        <h1 class="mb-3">Find Your Perfect Home in Nepal</h1>
+        <p class="lead mb-5 opacity-75">Browse verified rental houses, apartments, and rooms across Kathmandu and beyond</p>
+        <form action="{% url 'property_list' %}" method="get" class="d-flex search-bar mx-auto" style="max-width:600px">
+            <input type="text" name="query" class="form-control border-0 shadow-none" placeholder="Search by location, city, or property name...">
+            <button type="submit" class="btn btn-warning rounded-pill px-4">
+                <i class="fas fa-search me-1"></i> Search
+            </button>
+        </form>
+    </div>
+</section>
+
+<!-- Stats -->
+<div class="container">
+    <div class="stats-bar p-4 mb-5">
+        <div class="row text-center">
+            <div class="col stat-item">
+                <h3 class="fw-bold text-success">{{ total_properties }}</h3>
+                <p class="text-muted mb-0 small">Available Properties</p>
+            </div>
+            <div class="col stat-item">
+                <h3 class="fw-bold text-success">3+</h3>
+                <p class="text-muted mb-0 small">Cities Covered</p>
+            </div>
+            <div class="col stat-item">
+                <h3 class="fw-bold text-success">KNN</h3>
+                <p class="text-muted mb-0 small">Smart Recommendations</p>
+            </div>
+            <div class="col">
+                <h3 class="fw-bold text-success">Free</h3>
+                <p class="text-muted mb-0 small">No Broker Fees</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Categories -->
+<div class="container mb-5">
+    <h2 class="section-title mb-4">Browse by Type</h2>
+    <div class="row g-3">
+        {% for cat, label in categories %}
+        <div class="col-6 col-md-4 col-lg-2">
+            <a href="{% url 'property_list' %}?category={{ cat }}" class="text-decoration-none">
+                <div class="card text-center p-3">
+                    <div style="font-size:2rem">
+                        {% if cat == 'apartment' %}🏢{% elif cat == 'house' %}🏠{% elif cat == 'room' %}🛏{% elif cat == 'flat' %}🏗{% elif cat == 'studio' %}🏡{% else %}🏰{% endif %}
+                    </div>
+                    <div class="fw-semibold mt-2">{{ label }}</div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Featured Listings -->
+<div class="container mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="section-title mb-0">Latest Listings</h2>
+        <a href="{% url 'property_list' %}" class="btn btn-outline-success">View All <i class="fas fa-arrow-right ms-1"></i></a>
+    </div>
+    <div class="row g-4">
+        {% for prop in featured %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card property-card h-100">
+                {% if prop.image %}
+                    <img src="{{ prop.image.url }}" alt="{{ prop.title }}">
+                {% else %}
+                    <div class="bg-secondary d-flex align-items-center justify-content-center" style="height:200px;border-radius:12px 12px 0 0">
+                        <i class="fas fa-home fa-3x text-white opacity-50"></i>
+                    </div>
+                {% endif %}
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge badge-category">{{ prop.get_category_display }}</span>
+                        <span class="badge bg-secondary">{{ prop.get_furnishing_display }}</span>
+                    </div>
+                    <h5 class="card-title fw-bold">{{ prop.title }}</h5>
+                    <p class="text-muted small mb-2"><i class="fas fa-map-marker-alt me-1"></i>{{ prop.location }}, {{ prop.city }}</p>
+                    <div class="d-flex gap-3 text-muted small mb-3">
+                        <span><i class="fas fa-bed me-1"></i>{{ prop.bedrooms }} Bed</span>
+                        <span><i class="fas fa-bath me-1"></i>{{ prop.bathrooms }} Bath</span>
+                        {% if prop.area_sqft %}<span><i class="fas fa-ruler me-1"></i>{{ prop.area_sqft }} sqft</span>{% endif %}
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="property-price">NPR {{ prop.price|floatformat:0 }}<span class="text-muted small fw-normal">/month</span></span>
+                        <a href="{% url 'property_detail' prop.pk %}" class="btn btn-sm btn-primary">View</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5 text-muted">
+            <i class="fas fa-home fa-3x mb-3 opacity-25"></i>
+            <p>No listings yet. <a href="{% url 'register' %}">Register as an owner</a> to add properties.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- How it works -->
+<div class="bg-white py-5 mb-5">
+    <div class="container">
+        <h2 class="section-title text-center mb-5">How It Works</h2>
+        <div class="row g-4 text-center">
+            <div class="col-md-3">
+                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width:64px;height:64px;font-size:1.5rem">1</div>
+                <h5 class="fw-bold">Register</h5>
+                <p class="text-muted small">Create your account as a renter or property owner</p>
+            </div>
+            <div class="col-md-3">
+                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width:64px;height:64px;font-size:1.5rem">2</div>
+                <h5 class="fw-bold">Search</h5>
+                <p class="text-muted small">Browse and filter properties by location, price, and type</p>
+            </div>
+            <div class="col-md-3">
+                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width:64px;height:64px;font-size:1.5rem">3</div>
+                <h5 class="fw-bold">Book</h5>
+                <p class="text-muted small">Submit a reservation request directly to the owner</p>
+            </div>
+            <div class="col-md-3">
+                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width:64px;height:64px;font-size:1.5rem">4</div>
+                <h5 class="fw-bold">Move In</h5>
+                <p class="text-muted small">Owner confirms, and you move into your new home!</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
