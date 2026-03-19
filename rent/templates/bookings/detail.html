@@ -1,0 +1,76 @@
+{% extends 'base/base.html' %}
+{% block title %}Booking Details{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width:700px">
+    <h2 class="fw-bold mb-4">Booking Details</h2>
+
+    <div class="card p-4 mb-4">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <small class="text-muted d-block">Property</small>
+                <a href="{% url 'property_detail' booking.property.pk %}" class="fw-bold">{{ booking.property.title }}</a>
+            </div>
+            <div class="col-md-6">
+                <small class="text-muted d-block">Renter</small>
+                <span class="fw-bold">{{ booking.renter.get_full_name|default:booking.renter.username }}</span>
+            </div>
+            <div class="col-md-4">
+                <small class="text-muted d-block">Move-in Date</small>
+                <span class="fw-bold">{{ booking.move_in_date|date:"M d, Y" }}</span>
+            </div>
+            <div class="col-md-4">
+                <small class="text-muted d-block">Duration</small>
+                <span class="fw-bold">{{ booking.duration_months }} month(s)</span>
+            </div>
+            <div class="col-md-4">
+                <small class="text-muted d-block">Total Rent</small>
+                <span class="fw-bold text-success">NPR {{ booking.total_rent|floatformat:0 }}</span>
+            </div>
+            <div class="col-12">
+                <small class="text-muted d-block">Status</small>
+                <span class="badge fs-6 {% if booking.status == 'approved' %}bg-success{% elif booking.status == 'pending' %}bg-warning text-dark{% elif booking.status == 'rejected' %}bg-danger{% else %}bg-secondary{% endif %}">
+                    {{ booking.get_status_display }}
+                </span>
+            </div>
+            {% if booking.message %}
+            <div class="col-12">
+                <small class="text-muted d-block">Renter's Message</small>
+                <p class="mb-0 bg-light p-3 rounded">{{ booking.message }}</p>
+            </div>
+            {% endif %}
+            {% if booking.owner_response %}
+            <div class="col-12">
+                <small class="text-muted d-block">Owner's Response</small>
+                <p class="mb-0 bg-light p-3 rounded">{{ booking.owner_response }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Owner response form -->
+    {% if response_form %}
+    <div class="card p-4 mb-4">
+        <h5 class="fw-bold mb-3">Update Booking Status</h5>
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Status</label>
+                {{ response_form.status }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Response Message</label>
+                {{ response_form.owner_response }}
+            </div>
+            <button type="submit" class="btn btn-primary">Update Booking</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <!-- Renter cancel button -->
+    {% if booking.renter == user and booking.status == 'pending' %}
+    <a href="{% url 'cancel_booking' booking.pk %}" class="btn btn-outline-danger">
+        <i class="fas fa-times me-2"></i>Cancel Booking
+    </a>
+    {% endif %}
+</div>
+{% endblock %}

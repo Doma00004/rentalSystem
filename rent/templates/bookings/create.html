@@ -1,0 +1,58 @@
+{% extends 'base/base.html' %}
+{% block title %}Book Property{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width:600px">
+    <h2 class="fw-bold mb-4"><i class="fas fa-calendar-check me-2"></i>Book / Reserve Property</h2>
+
+    <!-- Property Summary -->
+    <div class="card p-3 mb-4 border-start border-4 border-success">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h5 class="fw-bold mb-1">{{ property.title }}</h5>
+                <p class="text-muted mb-0 small"><i class="fas fa-map-marker-alt me-1"></i>{{ property.location }}, {{ property.city }}</p>
+            </div>
+            <div class="text-end">
+                <div class="fw-bold text-success fs-5">NPR {{ property.price|floatformat:0 }}</div>
+                <small class="text-muted">per month</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="card p-4">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Preferred Move-in Date *</label>
+                {{ form.move_in_date }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Lease Duration (months) *</label>
+                {{ form.duration_months }}
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-semibold">Message to Owner</label>
+                {{ form.message }}
+            </div>
+            <div class="alert alert-light border small">
+                <strong>Estimated Total Rent:</strong> <span class="text-success fw-bold" id="totalRent">NPR {{ property.price|floatformat:0 }}</span>
+            </div>
+            <div class="d-flex gap-3">
+                <button type="submit" class="btn btn-success px-4 fw-bold">Submit Booking Request</button>
+                <a href="{% url 'property_detail' property.pk %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const pricePerMonth = {{ property.price }};
+    const durationInput = document.querySelector('[name="duration_months"]');
+    const totalEl = document.getElementById('totalRent');
+    durationInput.addEventListener('input', () => {
+        const months = parseInt(durationInput.value) || 1;
+        totalEl.textContent = 'NPR ' + (pricePerMonth * months).toLocaleString();
+    });
+</script>
+{% endblock %}

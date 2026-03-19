@@ -1,0 +1,41 @@
+{% extends 'base/base.html' %}
+{% block title %}My Bookings{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h2 class="fw-bold mb-4">
+        {% if user.is_renter %}My Bookings{% else %}Received Bookings{% endif %}
+    </h2>
+    {% if bookings %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Property</th>
+                    {% if user.is_owner %}<th>Renter</th>{% endif %}
+                    <th>Move-in</th><th>Duration</th><th>Total</th><th>Status</th><th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in bookings %}
+                <tr>
+                    <td><a href="{% url 'property_detail' b.property.pk %}">{{ b.property.title }}</a></td>
+                    {% if user.is_owner %}<td>{{ b.renter.username }}</td>{% endif %}
+                    <td>{{ b.move_in_date|date:"M d, Y" }}</td>
+                    <td>{{ b.duration_months }} mo</td>
+                    <td>NPR {{ b.total_rent|floatformat:0 }}</td>
+                    <td><span class="badge {% if b.status == 'approved' %}bg-success{% elif b.status == 'pending' %}bg-warning text-dark{% elif b.status == 'rejected' %}bg-danger{% else %}bg-secondary{% endif %}">{{ b.get_status_display }}</span></td>
+                    <td><a href="{% url 'booking_detail' b.pk %}" class="btn btn-sm btn-outline-primary">View</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5 text-muted">
+        <i class="fas fa-calendar fa-3x mb-3 opacity-25"></i>
+        <p>No bookings yet.</p>
+        {% if user.is_renter %}<a href="{% url 'property_list' %}" class="btn btn-primary">Browse Properties</a>{% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
