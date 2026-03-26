@@ -1,0 +1,63 @@
+{% extends 'base/base.html' %}
+{% block title %}Browse Properties{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="fw-bold mb-4">Browse Properties</h2>
+
+    <!-- Search filters -->
+    <div class="card mb-4 p-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-3">{{ form.query.label_tag }}<br>{{ form.query }}</div>
+            <div class="col-md-2">{{ form.category.label_tag }}<br>{{ form.category }}</div>
+            <div class="col-md-2">{{ form.min_price.label_tag }}<br>{{ form.min_price }}</div>
+            <div class="col-md-2">{{ form.max_price.label_tag }}<br>{{ form.max_price }}</div>
+            <div class="col-md-2">{{ form.furnishing.label_tag }}<br>{{ form.furnishing }}</div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search"></i></button>
+            </div>
+        </form>
+    </div>
+
+    <p class="text-muted"><strong>{{ total }}</strong> propert{{ total|pluralize:"y,ies" }} found</p>
+
+    <div class="row g-4">
+        {% for prop in properties %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card property-card h-100">
+                {% if prop.image %}
+                    <img src="{{ prop.image.url }}" alt="{{ prop.title }}" style="height:200px;object-fit:cover;border-radius:12px 12px 0 0">
+                {% else %}
+                    <div class="bg-secondary d-flex align-items-center justify-content-center" style="height:200px;border-radius:12px 12px 0 0">
+                        <i class="fas fa-home fa-3x text-white opacity-50"></i>
+                    </div>
+                {% endif %}
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="badge" style="background:#1a6b3c">{{ prop.get_category_display }}</span>
+                        <span class="badge bg-secondary">{{ prop.get_furnishing_display }}</span>
+                    </div>
+                    <h5 class="fw-bold">{{ prop.title }}</h5>
+                    <p class="text-muted small"><i class="fas fa-map-marker-alt me-1"></i>{{ prop.location }}, {{ prop.city }}</p>
+                    <div class="d-flex gap-3 text-muted small mb-3">
+                        <span><i class="fas fa-bed me-1"></i>{{ prop.bedrooms }}</span>
+                        <span><i class="fas fa-bath me-1"></i>{{ prop.bathrooms }}</span>
+                        {% if prop.area_sqft %}<span><i class="fas fa-ruler me-1"></i>{{ prop.area_sqft }} sqft</span>{% endif %}
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span style="color:#1a6b3c;font-weight:700;font-size:1.1rem">NPR {{ prop.price|floatformat:0 }}<small class="text-muted fw-normal">/mo</small></span>
+                        <a href="{% url 'property_detail' prop.pk %}" class="btn btn-sm btn-primary">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <i class="fas fa-search fa-3x text-muted opacity-25 mb-3"></i>
+            <h5 class="text-muted">No properties found matching your criteria.</h5>
+            <a href="{% url 'property_list' %}" class="btn btn-outline-primary mt-2">Clear Filters</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

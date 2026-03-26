@@ -1,0 +1,298 @@
+{% extends 'base/base.html' %}
+{% block title %}{{ action }} Property{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+    #location-map {
+        height: 380px;
+        border-radius: 10px;
+        border: 2px solid #dee2e6;
+        z-index: 0;
+    }
+    #location-map.picked { border-color: #1a6b3c; }
+    .map-search-box { position: relative; }
+    #map-search-results {
+        position: absolute;
+        top: 100%; left: 0; right: 0;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 0 0 8px 8px;
+        z-index: 1000;
+        max-height: 200px;
+        overflow-y: auto;
+        display: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    #map-search-results .result-item {
+        padding: 10px 14px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    #map-search-results .result-item:hover { background: #f8f9fa; }
+    .coord-display {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 0.85rem;
+        font-family: monospace;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width:800px">
+    <h2 class="fw-bold mb-4"><i class="fas fa-home me-2"></i>{{ action }} Property Listing</h2>
+    <div class="card p-4">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <!-- Hidden fields set by map interaction -->
+            <input type="hidden" name="latitude" id="id_latitude" value="{{ form.latitude.value|default:'' }}">
+            <input type="hidden" name="longitude" id="id_longitude" value="{{ form.longitude.value|default:'' }}">
+
+            <div class="row g-3">
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Title *</label>
+                    {{ form.title }}
+                    {% if form.title.errors %}<div class="text-danger small">{{ form.title.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Category *</label>
+                    {{ form.category }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Monthly Rent (NPR) *</label>
+                    {{ form.price }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Description *</label>
+                    {{ form.description }}
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label fw-semibold">Location / Address *</label>
+                    {{ form.location }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">City *</label>
+                    {{ form.city }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Bedrooms *</label>
+                    {{ form.bedrooms }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Bathrooms *</label>
+                    {{ form.bathrooms }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Area (sqft)</label>
+                    {{ form.area_sqft }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Furnishing *</label>
+                    {{ form.furnishing }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Status *</label>
+                    {{ form.status }}
+                </div>
+
+                <!-- ── MAP LOCATION PICKER ── -->
+                <div class="col-12 mt-2">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-map-marker-alt text-danger me-1"></i>
+                        Pin Property Location on Map *
+                    </label>
+                    <p class="text-muted small mb-2">
+                        Search your area below, then <strong>click on the map</strong> to drop a pin. You can also drag the pin to adjust.
+                    </p>
+
+                    <!-- Search -->
+                    <div class="map-search-box mb-2">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" id="map-search-input" class="form-control"
+                                   placeholder="Search area (e.g. Baneshwor, Thamel, Lalitpur)...">
+                            <button type="button" class="btn btn-outline-secondary" id="use-my-location">
+                                <i class="fas fa-crosshairs me-1"></i>My Location
+                            </button>
+                        </div>
+                        <div id="map-search-results"></div>
+                    </div>
+
+                    <!-- Map -->
+                    <div id="location-map"></div>
+
+                    <!-- Coordinate feedback -->
+                    <div class="coord-display mt-2" id="coord-display">
+                        <span id="coord-text" class="text-muted">
+                            <i class="fas fa-map-pin me-1"></i>No location pinned yet — click on the map above
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Image -->
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Property Image</label>
+                    {{ form.image }}
+                    {% if property.image %}
+                        <div class="mt-2">
+                            <small class="text-muted">Current image:</small><br>
+                            <img src="{{ property.image.url }}" style="height:80px;border-radius:6px;margin-top:4px">
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="d-flex gap-3 mt-4">
+                <button type="submit" class="btn btn-primary px-4" id="submit-btn">
+                    <i class="fas fa-save me-2"></i>{{ action }} Property
+                </button>
+                <a href="{% url 'property_list' %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // ── Init map (default: Kathmandu) ──
+    const existingLat = parseFloat(document.getElementById('id_latitude').value) || 27.7172;
+    const existingLon = parseFloat(document.getElementById('id_longitude').value) || 85.3240;
+    const hasExisting =!!document.getElementById('id_latitude').value;
+
+    const map = L.map('location-map').setView([existingLat, existingLon], hasExisting ? 16 : 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
+        maxZoom: 19
+    }).addTo(map);
+
+    // Green pin icon
+    const greenIcon = L.divIcon({
+        className: '',
+        html: `<div style="width:20px;height:20px;background:#1a6b3c;border:3px solid white;
+                    border-radius:50% 50% 50% 0;transform:rotate(-45deg);
+                    box-shadow:0 2px 8px rgba(0,0,0,0.4)"></div>`,
+        iconSize: [20, 20], iconAnchor: [10, 20]
+    });
+
+    let marker = null;
+
+    // Show existing pin if editing
+    if (hasExisting) {
+        marker = L.marker([existingLat, existingLon], { icon: greenIcon, draggable: true }).addTo(map);
+        bindDrag(marker);
+        showCoords(existingLat, existingLon);
+        document.getElementById('location-map').classList.add('picked');
+    }
+
+    // Click to place/move pin
+    map.on('click', function(e) { placePin(e.latlng.lat, e.latlng.lng); });
+
+    function placePin(lat, lng) {
+        if (marker) {
+            marker.setLatLng([lat, lng]);
+        } else {
+            marker = L.marker([lat, lng], { icon: greenIcon, draggable: true }).addTo(map);
+            bindDrag(marker);
+        }
+        setCoords(lat, lng);
+        document.getElementById('location-map').classList.add('picked');
+        document.getElementById('location-map').style.border = '2px solid #1a6b3c';
+    }
+
+    function bindDrag(m) {
+        m.on('dragend', function(e) {
+            const p = e.target.getLatLng();
+            setCoords(p.lat, p.lng);
+        });
+    }
+
+    function setCoords(lat, lng) {
+        document.getElementById('id_latitude').value = lat.toFixed(6);
+        document.getElementById('id_longitude').value = lng.toFixed(6);
+        showCoords(lat, lng);
+    }
+
+    function showCoords(lat, lng) {
+        document.getElementById('coord-text').innerHTML =
+            `<span class="text-success fw-semibold"><i class="fas fa-check-circle me-1"></i>Location pinned:</span>
+             &nbsp;Lat <strong>${parseFloat(lat).toFixed(5)}</strong>,
+             Lon <strong>${parseFloat(lng).toFixed(5)}</strong>
+             &nbsp;<small class="text-muted">(drag the pin to fine-tune)</small>`;
+    }
+
+    // ── Nominatim search ──
+    const searchInput  = document.getElementById('map-search-input');
+    const searchResults = document.getElementById('map-search-results');
+    let searchTimer;
+
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimer);
+        const q = this.value.trim();
+        if (q.length < 3) { searchResults.style.display = 'none'; return; }
+        searchTimer = setTimeout(() => doSearch(q), 500);
+    });
+
+    function doSearch(q) {
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q + ', Nepal')}&limit=6`)
+            .then(r => r.json())
+            .then(data => {
+                searchResults.innerHTML = '';
+                if (!data.length) {
+                    searchResults.innerHTML = '<div class="result-item text-muted">No results found. Try a different name.</div>';
+                } else {
+                    data.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'result-item';
+                        div.textContent = item.display_name;
+                        div.addEventListener('click', () => {
+                            const lat = parseFloat(item.lat), lon = parseFloat(item.lon);
+                            map.setView([lat, lon], 16);
+                            placePin(lat, lon);
+                            searchInput.value = item.display_name.split(',')[0];
+                            searchResults.style.display = 'none';
+                        });
+                        searchResults.appendChild(div);
+                    });
+                }
+                searchResults.style.display = 'block';
+            }).catch(() => {});
+    }
+
+    document.addEventListener('click', e => {
+        if (!e.target.closest('.map-search-box')) searchResults.style.display = 'none';
+    });
+
+    // ── Use device location ──
+    document.getElementById('use-my-location').addEventListener('click', function() {
+        if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
+        const btn = this;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Locating...';
+        navigator.geolocation.getCurrentPosition(pos => {
+            const lat = pos.coords.latitude, lng = pos.coords.longitude;
+            map.setView([lat, lng], 17);
+            placePin(lat, lng);
+            btn.innerHTML = '<i class="fas fa-crosshairs me-1"></i>My Location';
+        }, () => {
+            alert('Could not get location. Please enable location access in your browser.');
+            btn.innerHTML = '<i class="fas fa-crosshairs me-1"></i>My Location';
+        });
+    });
+
+    // ── Validate pin on submit ──
+    document.getElementById('submit-btn').addEventListener('click', function(e) {
+        if (!document.getElementById('id_latitude').value) {
+            e.preventDefault();
+            document.getElementById('location-map').style.border = '2px solid #dc3545';
+            document.getElementById('coord-text').innerHTML =
+                '<span class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>Please pin the property location on the map before saving.</span>';
+            document.getElementById('location-map').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
+</script>
+{% endblock %}
