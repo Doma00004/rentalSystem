@@ -1,0 +1,98 @@
+{% extends 'base/base.html' %}
+{% block title %}My Profile{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="row g-4">
+        <!-- Profile Update -->
+        <div class="col-lg-4">
+            <div class="card p-4">
+                <div class="text-center mb-3">
+                    {% if user.profile_photo %}
+                        <img src="{{ user.profile_photo.url }}" class="rounded-circle mb-2" style="width:80px;height:80px;object-fit:cover">
+                    {% else %}
+                        <div class="rounded-circle bg-success d-flex align-items-center justify-content-center mx-auto mb-2" style="width:80px;height:80px;font-size:2rem;color:white">
+                            {{ user.first_name|first|default:user.username|first|upper }}
+                        </div>
+                    {% endif %}
+                    <h5 class="fw-bold mb-0">{{ user.get_full_name|default:user.username }}</h5>
+                    <span class="badge bg-success">{{ user.get_role_display }}</span>
+                </div>
+                <hr>
+                <h6 class="fw-bold mb-3">Update Profile</h6>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {% for field in form %}
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">{{ field.label }}</label>
+                        {{ field }}
+                    </div>
+                    {% endfor %}
+                    <button type="submit" class="btn btn-primary w-100 mt-2">Save Changes</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Activity -->
+        <div class="col-lg-8">
+            {% if user.is_renter %}
+            <h4 class="fw-bold mb-3">My Bookings</h4>
+            {% if bookings %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr><th>Property</th><th>Move-in</th><th>Duration</th><th>Status</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        {% for b in bookings %}
+                        <tr>
+                            <td><a href="{% url 'property_detail' b.property.pk %}">{{ b.property.title }}</a></td>
+                            <td>{{ b.move_in_date|date:"M d, Y" }}</td>
+                            <td>{{ b.duration_months }} mo</td>
+                            <td>
+                                <span class="badge {% if b.status == 'approved' %}bg-success{% elif b.status == 'pending' %}bg-warning text-dark{% elif b.status == 'rejected' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                    {{ b.get_status_display }}
+                                </span>
+                            </td>
+                            <td><a href="{% url 'booking_detail' b.pk %}" class="btn btn-sm btn-outline-primary">View</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted">No bookings yet. <a href="{% url 'property_list' %}">Browse properties</a>.</p>
+            {% endif %}
+
+            {% elif user.is_owner %}
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="fw-bold mb-0">My Properties</h4>
+                <a href="{% url 'property_create' %}" class="btn btn-sm btn-primary"><i class="fas fa-plus me-1"></i>Add</a>
+            </div>
+            {% if properties %}
+            <div class="row g-3">
+                {% for prop in properties %}
+                <div class="col-md-6">
+                    <div class="card p-3">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="fw-bold mb-1">{{ prop.title }}</h6>
+                                <small class="text-muted">{{ prop.location }} &bull; NPR {{ prop.price|floatformat:0 }}/mo</small>
+                            </div>
+                            <span class="badge {% if prop.status == 'available' %}bg-success{% else %}bg-secondary{% endif %} align-self-start">{{ prop.get_status_display }}</span>
+                        </div>
+                        <div class="d-flex gap-2 mt-2">
+                            <a href="{% url 'property_detail' prop.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+                            <a href="{% url 'property_edit' prop.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">No properties listed. <a href="{% url 'property_create' %}">Add your first property</a>.</p>
+            {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

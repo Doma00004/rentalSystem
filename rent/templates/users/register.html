@@ -1,0 +1,55 @@
+{% extends 'base/base.html' %}
+{% block title %}Register - House Lease System{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width:520px">
+    <div class="card p-4">
+        <div class="text-center mb-4">
+            <i class="fas fa-user-plus fa-2x text-success mb-2"></i>
+            <h3 class="fw-bold">Create Account</h3>
+            <p class="text-muted small">Join HouseLeaseNP to find or list properties</p>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">First Name</label>
+                    {{ form.first_name }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Last Name</label>
+                    {{ form.last_name }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Username *</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}<div class="text-danger small">{{ form.username.errors }}</div>{% endif %}
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Email *</label>
+                    {{ form.email }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Phone</label>
+                    {{ form.phone }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">I am a... *</label>
+                    {{ form.role }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Password *</label>
+                    {{ form.password1 }}
+                    {% if form.password1.errors %}<div class="text-danger small">{{ form.password1.errors }}</div>{% endif %}
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Confirm Password *</label>
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}<div class="text-danger small">{{ form.password2.errors }}</div>{% endif %}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success w-100 py-2 mt-4 fw-bold">Create Account</button>
+        </form>
+        <p class="text-center text-muted mt-3 small">Already have an account? <a href="{% url 'login' %}">Login here</a></p>
+    </div>
+</div>
+{% endblock %}
