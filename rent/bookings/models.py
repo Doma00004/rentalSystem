@@ -1,6 +1,10 @@
 from django.db import models
 from django.conf import settings
+<<<<<<< HEAD
 # from properties.models import Property
+=======
+from properties.models import Property
+>>>>>>> origin/main
 
 
 class Booking(models.Model):
@@ -12,7 +16,11 @@ class Booking(models.Model):
     ]
 
     renter = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='bookings')
+<<<<<<< HEAD
     # property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='bookings')
+=======
+    property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='bookings')
+>>>>>>> origin/main
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='pending')
     move_in_date = models.DateField()
     duration_months = models.PositiveIntegerField(default=1, help_text='Lease duration in months')
